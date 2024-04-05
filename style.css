@@ -1,0 +1,39 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body{
+  font-family: sans-serif;
+  font-size: 1em;
+  color: #040404;
+}
+
+h1{
+  color: navy;
+  text-align: center;
+  margin: 1em auto;
+}
+#title-span{
+  display: inline-block;
+  font-size: 0.7em;
+  font-weight: 500;
+}
+
+#chart-container{
+  width: 850px;
+  height: 550px;
+  padding: 0.5em;
+  margin: 1em auto;
+  border: 1px solid gray;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.label{
+  font-size: 0.8em;
+  text-align: center;
+}
+#legend{
+  font-size: 0.8em;
+}

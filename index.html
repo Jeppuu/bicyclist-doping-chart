@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scatter Plot</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <div id="chart-container"></div>
+
+    <script>
+      // Width and height of the chart
+      const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+      const width = 800 - margin.left - margin.right;
+      const height = 400 - margin.top - margin.bottom;
+      const barWidth = width / 275;
+
+      // Create title
+      const title = d3
+        .select("#chart-container")
+        .append("h1")
+        .attr("id", "title")
+        .text("Doping in Professional Bicycle Racing")
+        .append("span")
+        .attr("id", "title-span")
+        .text("35 fastest times up Alpe d'Huez");
+
+      // Create tooltip
+      const tooltip = d3
+        .select("#chart-container")
+        .append("div")
+        .attr("id", "tooltip")
+        .style("position", "absolute")
+        .style("background-color", "white")
+        .style("border", "solid")
+        .style("border-width", "1px")
+        .style("border-radius", "5px")
+        .style("padding", "5px")
+        .style("opacity", 0);
+
+      // Create SVG for the chart
+      const svg = d3
+        .select("#chart-container")
+        .append("svg")
+        .attr("id", "chart")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Fetch data from API
+      d3.json(
+        "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json"
+      )
+        .then((data) => {
+          // Add label
+          svg
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -200)
+            .attr("y", margin.left - 30)
+            .attr("class", "label")
+            .text("Time in minutes");
+
+          const timeFormat = d3.timeFormat("%M:%S");
+
+          // Create x scale
+          const xScale = d3
+            .scaleLinear()
+            .domain([
+              d3.min(data, (d) => d.Year - 1),
+              d3.max(data, (d) => d.Year + 1),
+            ])
+            .range([0, width]);
+
+          // Create x-axis
+          const xAxis = d3
+            .axisBottom()
+            .scale(xScale)
+            .tickFormat(d3.format("d"));
+
+          // Append x-axis to the chart
+          svg
+            .append("g")
+            .attr("id", "x-axis")
+            .attr("transform", "translate(0," + height + ")") // turn the axis
+            .call(xAxis);
+
+          console.log(data.map((d) => d.Time));
+
+          // Create y-scale
+          const yScale = d3
+            .scaleTime()
+            .domain(d3.extent(data, (d) => new Date("1970-01-01T00:" + d.Time)))
+            .range([0, height]);
+
+          console.log(yScale.range());
+
+          // Create y-axis
+          const yAxis = d3.axisLeft(yScale).tickFormat(timeFormat);
+
+          // Append y-axis to the chart
+          svg
+            .append("g")
+            .call(yAxis)
+            .attr("id", "y-axis")
+            .attr("transform", "translate(0, 0)"); // Ensure the y-axis is translated properly
+
+          // Create dots
+          svg
+            .selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", "dot")
+            .attr("r", 6)
+            .attr("cx", (d) => xScale(d.Year))
+            .attr("cy", (d) => yScale(new Date("1970-01-01T00:" + d.Time))) // Use yScale to convert time to y-coordinate
+            .attr("data-xvalue", (d) => d.Year)
+            .attr("data-yvalue", (d) => new Date("1970-01-01T00:" + d.Time))
+            .style("stroke", "navy")
+            .style("stroke-width", "1px")
+            .style("fill", (d) => (d.Doping === "" ? "navy" : "violet"))
+            .on("mouseover", (event, d) => {
+              // Parse the time string into minutes and seconds
+              const timeParts = d.Time.split(":");
+              const minutes = +timeParts[0]; // Convert string to number
+              const seconds = +timeParts[1]; // Convert string to number
+
+              // Create a new Date object with the time parts
+              const time = new Date();
+              time.setMinutes(minutes);
+              time.setSeconds(seconds);
+
+              tooltip
+                .style("opacity", 0.9)
+                .attr("data-year", d.Year)
+                .html(
+                  d.Name +
+                    ": " +
+                    d.Nationality +
+                    "<br/>" +
+                    "Year: " +
+                    d.Year +
+                    ", Time: " +
+                    timeFormat(time) +
+                    (d.Doping ? "<br/><br/>" + d.Doping : "")
+                )
+                .style("left", event.pageX + "px")
+                .style("top", event.pageY - 24 + "px");
+            })
+            .on("mouseout", () => tooltip.style("opacity", 0));
+
+        // Create a legend
+        
+          const legend = svg
+            .append("g")
+            .attr("id", "legend")
+            .attr("transform", "translate(" + (width - 100) + ",20)");
+
+          legend
+            .append("rect")
+            .attr("x", 20)
+            .attr("y", 0)
+            .attr("width", 10)
+            .attr("height", 10)
+            .style("fill", "navy");
+
+          legend
+            .append("text")
+            .attr("x", 15)
+            .attr("y", 10)
+            .style('text-anchor', 'end')
+            .text("No doping allegations");
+
+          legend
+            .append("rect")
+            .attr("x", 20)
+            .attr("y", 20)
+            .attr("width", 10)
+            .attr("height", 10)
+            .style("fill", "violet");
+
+          legend
+            .append("text")
+            .attr("x", 15)
+            .attr("y", 30)
+        .style('text-anchor', 'end')
+            .text("Riders with doping allegations");
+        
+          // End of json data
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+        });
+    </script>
+    <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
+  </body>
+</html>
